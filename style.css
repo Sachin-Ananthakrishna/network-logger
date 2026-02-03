@@ -1,0 +1,42 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background: #f0f0f0;
+}
+
+h1 {
+    background: #333;
+    color: white;
+    padding: 15px;
+    margin: 0;
+}
+
+#map {
+    height: 60vh;
+    width: 100%;
+}
+
+.controls {
+    margin: 20px;
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+}
+
+#startBtn {
+    background: #28a745;
+    color: white;
+}
+
+#stopBtn {
+    background: #dc3545;
+    color: white;
+}
