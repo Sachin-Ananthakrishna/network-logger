@@ -40,3 +40,17 @@ button {
     background: #dc3545;
     color: white;
 }
+
+#output {
+    background: white;
+    padding: 15px;
+    margin: 10px;
+    width: 90%;
+    max-width: 600px;
+    line-height: 1.6;
+    border-radius: 8px;
+    display: inline-block;
+    text-align: left;
+    font-size: 16px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
