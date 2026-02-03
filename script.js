@@ -1,58 +1,78 @@
 let map, marker;
-let logging = false;
 let logData = [];
 let startTime = 0;
 let intervalId = null;
 
-// Initialize map
+const TEST_FILE_URL = "https://speed.cloudflare.com/__down?bytes=1000000"; // 1 MB test
+const TEST_FILE_KB = 1000000 / 1024; // convert to KB
+
+// Initialize map and ask for GPS
 window.onload = () => {
-    map = L.map('map').setView([0, 0], 13);
+    map = L.map('map').setView([0, 0], 3);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
     }).addTo(map);
 
-    // Track user location on map
     if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(pos => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
 
-            if (!marker) {
+                map.setView([lat, lng], 16);
                 marker = L.marker([lat, lng]).addTo(map);
-            } else {
-                marker.setLatLng([lat, lng]);
+            },
+            err => {
+                alert("Please enable location permission for accurate tracking.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 6000
             }
+        );
 
-            map.setView([lat, lng], 16);
-        });
+        navigator.geolocation.watchPosition(
+            pos => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
+                if (marker) marker.setLatLng([lat, lng]);
+                else marker = L.marker([lat, lng]).addTo(map);
+
+                map.setView([lat, lng], 16);
+            },
+            err => console.log("GPS Error:", err),
+            {
+                enableHighAccuracy: true,
+                maximumAge: 0
+            }
+        );
     }
 };
 
-// Function to measure real download speed
+// Measure speed in kbps
 async function measureSpeedKbps() {
-    const testUrl = "https://speed.hetzner.de/100MB.bin"; // public test file
-    const fileSizeKB = 100 * 1024; // 100MB in KB
-
     const start = performance.now();
+
     try {
-        const response = await fetch(testUrl, { method: 'GET', cache: "no-store" });
+        const response = await fetch(TEST_FILE_URL, { cache: "no-store" });
         const reader = response.body.getReader();
-
-        // Only read first chunk to avoid huge download
-        await reader.read();
+        await reader.read(); // only read first chunk
     } catch (e) {
-        return 0; // no network
+        console.log("Speed test error:", e);
+        return 0;
     }
-    const end = performance.now();
 
+    const end = performance.now();
     const timeSec = (end - start) / 1000;
-    return Math.round(fileSizeKB / timeSec); // kbps
+
+    // kbps = KB / sec
+    return Math.round(TEST_FILE_KB / timeSec);
 }
 
 // Start Logging
 document.getElementById("startBtn").onclick = () => {
-    logging = true;
     logData = [];
     startTime = Date.now();
 
@@ -72,9 +92,8 @@ document.getElementById("startBtn").onclick = () => {
     }, 5000);
 };
 
-// Stop Logging + Download CSV
+// Stop + Download CSV
 document.getElementById("stopBtn").onclick = () => {
-    logging = false;
     clearInterval(intervalId);
 
     document.getElementById("startBtn").disabled = false;
@@ -86,7 +105,6 @@ document.getElementById("stopBtn").onclick = () => {
         csv += `${row.time},${row.kbps}\n`;
     });
 
-    // Download file
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
 
