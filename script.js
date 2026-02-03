@@ -3,8 +3,10 @@ let logData = [];
 let startTime = 0;
 let intervalId = null;
 
-const TEST_FILE_URL = "https://speed.cloudflare.com/__down?bytes=1000000"; // 1 MB
+const TEST_FILE_URL = "https://speed.cloudflare.com/__down?bytes=1000000";
 const EXPECTED_KB = 1000000 / 1024;
+
+const outputBox = document.getElementById("output");
 
 // ============ MAP INITIALIZATION ============
 window.onload = () => {
@@ -40,7 +42,7 @@ window.onload = () => {
     }
 };
 
-// ============ FIXED SPEED TEST ============
+// ============ SPEED TEST ============
 async function measureSpeedKbps() {
     const start = performance.now();
 
@@ -48,17 +50,14 @@ async function measureSpeedKbps() {
         const response = await fetch(TEST_FILE_URL, { cache: "no-store" });
         const reader = response.body.getReader();
 
-        // Read chunks for ~300ms
         let receivedBytes = 0;
-        let done = false;
 
-        while (!done) {
-            const { done: isDone, value } = await reader.read();
+        while (true) {
+            const { done, value } = await reader.read();
             if (value) receivedBytes += value.length;
 
-            // Stop reading after 300 ms
             if (performance.now() - start > 300) break;
-            if (isDone) break;
+            if (done) break;
         }
 
         const end = performance.now();
@@ -80,10 +79,9 @@ document.getElementById("startBtn").onclick = () => {
 
     document.getElementById("startBtn").disabled = true;
     document.getElementById("stopBtn").disabled = false;
-
     document.getElementById("startBtn").style.opacity = 0.4;
 
-    document.getElementById("output").innerHTML = "<h3>Logging Started...</h3>";
+    outputBox.innerHTML = "<strong>Logging Started...</strong><br><br>";
 
     intervalId = setInterval(async () => {
         const elapsedSec = Math.round((Date.now() - startTime) / 1000);
@@ -91,11 +89,7 @@ document.getElementById("startBtn").onclick = () => {
 
         logData.push({ time: elapsedSec, kbps });
 
-        // Show live data below
-        document.getElementById("output").innerHTML += 
-            `<div>Time: ${elapsedSec}s → ${kbps} kbps</div>`;
-
-        console.log("Logged:", elapsedSec, kbps);
+        outputBox.innerHTML += `<div><strong>${elapsedSec}s</strong> → ${kbps} kbps</div>`;
 
     }, 5000);
 };
@@ -108,13 +102,11 @@ document.getElementById("stopBtn").onclick = () => {
     document.getElementById("stopBtn").disabled = true;
     document.getElementById("startBtn").style.opacity = 1;
 
-    // Convert to CSV
     let csv = "time_seconds,kbps\n";
     logData.forEach(row => {
         csv += `${row.time},${row.kbps}\n`;
     });
 
-    // Download CSV
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
 
@@ -125,5 +117,5 @@ document.getElementById("stopBtn").onclick = () => {
 
     URL.revokeObjectURL(url);
 
-    document.getElementById("output").innerHTML += `<h3>Logging Stopped. File Downloaded.</h3>`;
+    outputBox.innerHTML += `<br><strong>Logging Stopped. File Downloaded.</strong>`;
 };
