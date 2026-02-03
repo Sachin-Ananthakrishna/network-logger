@@ -2,20 +2,28 @@ let map, marker;
 let logData = [];
 let startTime = 0;
 let intervalId = null;
+let outputBox = null;
 
 const TEST_FILE_URL = "https://speed.cloudflare.com/__down?bytes=1000000";
-const EXPECTED_KB = 1000000 / 1024;
 
-const outputBox = document.getElementById("output");
-
-// ============ MAP INITIALIZATION ============
+// ===================== MAP + DOM READY =====================
 window.onload = () => {
+
+    // FIX: outputBox is initialized only AFTER DOM loads (works on mobile)
+    outputBox = document.getElementById("output");
+
+    if (!outputBox) {
+        alert("ERROR: Output box not loaded. Mobile browser issue.");
+        return;
+    }
+
     map = L.map('map').setView([0, 0], 3);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
     }).addTo(map);
 
+    // GPS with high accuracy
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             pos => {
@@ -42,10 +50,10 @@ window.onload = () => {
     }
 };
 
-// ============ SPEED TEST ============
+
+// ===================== SPEED TEST =====================
 async function measureSpeedKbps() {
     const start = performance.now();
-
     try {
         const response = await fetch(TEST_FILE_URL, { cache: "no-store" });
         const reader = response.body.getReader();
@@ -60,9 +68,7 @@ async function measureSpeedKbps() {
             if (done) break;
         }
 
-        const end = performance.now();
-        const durationSec = (end - start) / 1000;
-
+        const durationSec = (performance.now() - start) / 1000;
         const kb = receivedBytes / 1024;
         return Math.round(kb / durationSec);
 
@@ -72,14 +78,24 @@ async function measureSpeedKbps() {
     }
 }
 
-// ============ START BUTTON ============
+
+// ===================== START BUTTON =====================
 document.getElementById("startBtn").onclick = () => {
+
+    if (!outputBox) {
+        alert("Output element missing!");
+        return;
+    }
+
     logData = [];
     startTime = Date.now();
 
-    document.getElementById("startBtn").disabled = true;
-    document.getElementById("stopBtn").disabled = false;
-    document.getElementById("startBtn").style.opacity = 0.4;
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    startBtn.disabled = true;
+    startBtn.style.opacity = 0.4;
+    stopBtn.disabled = false;
 
     outputBox.innerHTML = "<strong>Logging Started...</strong><br><br>";
 
@@ -91,10 +107,14 @@ document.getElementById("startBtn").onclick = () => {
 
         outputBox.innerHTML += `<div><strong>${elapsedSec}s</strong> → ${kbps} kbps</div>`;
 
+        // Auto scroll on mobile to show newest data
+        outputBox.scrollTop = outputBox.scrollHeight;
+
     }, 5000);
 };
 
-// ============ STOP BUTTON ============
+
+// ===================== STOP BUTTON =====================
 document.getElementById("stopBtn").onclick = () => {
     clearInterval(intervalId);
 
