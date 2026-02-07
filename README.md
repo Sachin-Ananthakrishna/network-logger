@@ -1,10 +1,8 @@
 # 📶 Network Speed Logger (Web-Based)
 
-A lightweight static website that logs **network download speed (kbps) vs time** and exports it as a **CSV file**.
+A lightweight website that logs **network download speed (kbps) vs time** and exports it as a **CSV file**.
 
-Works entirely in the browser.  
-No backend.  
-Fully compatible with GitHub Pages.
+Works entirely in the browser.
 
 ---
 
@@ -52,7 +50,6 @@ Fully compatible with GitHub Pages.
 - Real speed is measured by downloading a test file  
 - Only the **first chunk** is read → low data usage  
 - CSV uses `time_seconds` and `kbps` columns  
-- 100% client-side (no server processing)  
 
 ---
 
